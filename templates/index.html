@@ -4,23 +4,19 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Secret Santa</title>
 <style>
-body{margin:0;min-height:100vh;background:#1a1a1a url('/static/bg.jpg') center/cover no-repeat fixed;display:flex;align-items:center;justify-content:center;font-family:system-ui;color:white}
-.card{background:rgba(0,0,0,0.85);backdrop-filter:blur(10px);padding:28px;border-radius:28px;width:90%;max-width:340px;text-align:center;box-shadow:0 10px 40px rgba(0,0,0,0.6);border:1px solid rgba(255,255,255,0.1)}
-h1{margin:0 0 20px 0}
-input{width:100%;box-sizing:border-box;padding:14px;border-radius:14px;border:none;background:#222;color:white;margin:8px 0;font-size:16px;text-align:center;outline:none}
-.btn{width:100%;padding:14px;border:none;border-radius:14px;font-size:17px;font-weight:bold;cursor:pointer;margin:8px 0}
-.red{background:#ff2d2d;color:white}
-.green{background:#22c55e;color:white}
-.small{font-size:14px;opacity:0.8;margin-top:10px;word-break:break-all}
-.members{text-align:left;background:#111;padding:12px;border-radius:12px;margin:12px 0;max-height:150px;overflow:auto}
-.emoji-bar{position:fixed;top:0;left:0;width:100%;background:rgba(0,0,0,0.3);padding:6px 0;font-size:20px;white-space:nowrap;overflow:hidden}
+body{margin:0;min-height:100vh;background:#111 url('/static/bg.jpg') center/cover fixed;display:flex;align-items:center;justify-content:center;font-family:sans-serif;color:white}
+.card{background:rgba(0,0,0,0.8);padding:24px;border-radius:24px;width:90%;max-width:350px;text-align:center}
+input{width:100%;box-sizing:border-box;padding:14px;border-radius:12px;border:none;background:#222;color:white;margin:8px 0;font-size:16px;text-align:center}
+.btn{width:100%;padding:14px;border:none;border-radius:12px;font-size:17px;font-weight:bold;cursor:pointer;margin:8px 0}
+.red{background:#ff2d2d;color:white}.green{background:#22c55e;color:white}
+.small{font-size:13px;opacity:0.8;margin-top:8px;word-break:break-all}
+.members{text-align:left;background:#1a1a1a;padding:10px;border-radius:10px;margin:10px 0}
 </style>
 </head>
 <body>
-<div class="emoji-bar">❄️ ⛄ 🎄 🎅 ❄️ ⛄ 🎄 🎅 ❄️ ⛄ 🎄 🎅 ❄️ ⛄ 🎄 🎅</div>
 <div class="card" id="app">
 <h1>🎅 Secret Santa</h1>
-<input id="name" placeholder="Your Name (ex: Dhanam)">
+<input id="name" placeholder="Your Name">
 <button class="btn red" onclick="createGroup()">Create Group</button>
 <div>or</div>
 <input id="code" placeholder="Enter Code">
@@ -29,10 +25,10 @@ input{width:100%;box-sizing:border-box;padding:14px;border-radius:14px;border:no
 </div>
 <script>
 let myName="", roomCode=new URLSearchParams(location.search).get('code')||"";
-if(roomCode){ loadRoom(); }
+if(roomCode) loadRoom();
 async function createGroup(){
   myName=document.getElementById('name').value.trim();
-  if(!myName) return alert('Name enter pannu da!');
+  if(!myName){ alert('Name enter pannu da!'); return; }
   let res=await fetch('/api/create-room',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:myName})});
   let data=await res.json();
   location.href='/?code='+data.code+'&name='+encodeURIComponent(myName);
@@ -40,11 +36,11 @@ async function createGroup(){
 async function joinGroup(){
   myName=document.getElementById('name').value.trim();
   let code=document.getElementById('code').value.trim().toUpperCase();
-  if(!myName) return alert('Name enter pannu da!');
-  if(!code) return alert('Code enter pannu da!');
+  if(!myName){ alert('Name enter pannu da!'); return; }
+  if(!code){ alert('Code enter pannu da!'); return; }
   let res=await fetch('/api/join-room',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code,name:myName})});
   let data=await res.json();
-  if(data.error) return alert(data.error);
+  if(data.error){ alert(data.error); return; }
   location.href='/?code='+code+'&name='+encodeURIComponent(myName);
 }
 async function loadRoom(){
@@ -53,18 +49,16 @@ async function loadRoom(){
   if(!myName){ myName=prompt('Your name?'); if(!myName) return; }
   let res=await fetch(`/api/get-room?code=${roomCode}&name=${encodeURIComponent(myName)}`);
   let data=await res.json();
-  if(data.error){ document.getElementById('app').innerHTML='<h1>Error</h1><p>'+data.error+'</p><a href=\"/\" style=\"color:#22c55e\">Go Home</a>'; return; }
-  let html=`<h1>🎅 Secret Santa</h1>
-  <div class="small">Code: <b>${roomCode}</b> - Share this!</div>
-  <div class="members"><b>Members (${data.members.length}):</b><br>${data.members.join('<br>')}</div>`;
+  if(data.error){ document.getElementById('app').innerHTML='<h1>Error</h1><p>'+data.error+'</p><a href="/" style="color:#22c55e">Go Home</a>'; return; }
+  let html=`<h1>🎅 Secret Santa</h1><div class="small">Code: <b>${roomCode}</b></div><div class="members"><b>Members:</b><br>${data.members.join('<br>')}</div>`;
   if(data.shuffled){
-    if(data.assigned) html+=`<div style="background:#22c55e;color:white;padding:14px;border-radius:12px;margin:10px 0;font-weight:bold">You got: ${data.assigned} 🎁</div>`;
-    else html+=`<div>Shuffled! Waiting...</div>`;
+    if(data.assigned) html+=`<div style="background:#22c55e;padding:12px;border-radius:10px;font-weight:bold">You got: ${data.assigned} 🎁</div>`;
+    else html+=`<div>Shuffled!</div>`;
   } else {
     if(data.is_creator) html+=`<button class="btn red" onclick="shuffle()">Shuffle & Start 🎲</button>`;
-    else html+=`<div class="small">Waiting for admin to shuffle...</div>`;
+    else html+=`<div class="small">Waiting for admin...</div>`;
   }
-  html+=`<button class="btn green" onclick="location.href='/'">Leave</button><div class="small">Logged as: ${myName}</div>`;
+  html+=`<button class="btn green" onclick="location.href='/'">Leave</button><div class="small">You: ${myName}</div>`;
   document.getElementById('app').innerHTML=html;
   if(!data.shuffled) setTimeout(loadRoom,2000);
 }
