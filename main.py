@@ -58,8 +58,7 @@ button:hover{background:#e60000}
 <hr>
 <h3>🎁 Un gift box!</h3>
 <div class="gift" onclick="openGift()">🎁</div>
-<p>Box ah click pannu yaarukku gift kodukanum nu paarkalam!</p>
-<div id="myAssignment" style="font-size:20px;font-weight:bold;margin-top:15px"></div>
+<div id="myAssignment" style="font-size:32px;font-weight:bold;margin-top:15px"></div>
 </div>
 <div id="roomMsg"></div>
 <button onclick="location.reload()" style="background:#666;margin-top:15px">Leave Room</button>
@@ -141,7 +140,7 @@ async function openGift(){
   let r=await fetch(`/api/my-assignment/${myCode}/${encodeURIComponent(myName)}`);
   let d=await r.json();
   if(d.error){alert(d.error);return;}
-  document.getElementById('myAssignment').innerHTML=`Nee <b>${d.to}</b> ku gift kodukanum! 🎁🎄<br><small>Yaar kitayum solladha da! Secret!</small>`;
+  document.getElementById('myAssignment').innerHTML=`${d.to} 🩷💙`;
   document.querySelector('.gift').innerText='🎉';
 }
 
@@ -205,7 +204,6 @@ def shuffle_room(data: dict):
         return {"error":"2 peru kooda venum da!"}
     members=room["members"][:]
     shuffled=members[:]
-    # Derangement - thanakku thane vara koodathu
     for _ in range(1000):
         random.shuffle(shuffled)
         if all(a!=b for a,b in zip(members, shuffled)):
