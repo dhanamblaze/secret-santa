@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Secret Santa</title>
+<style>
+body{font-family:Arial;background:#0f0f0f;color:white;display:flex;justify-content:center;align-items:center;min-height:100vh;margin:0}
+.card{background:#1e1e1e;padding:25px;border-radius:20px;width:90%;max-width:400px;text-align:center;box-shadow:0 0 20px rgba(255,59,59,0.3)}
+input,button{width:100%;padding:12px;margin:8px 0;border-radius:10px;border:none;box-sizing:border-box}
+button{background:#ff3b3b;color:white;font-weight:bold;cursor:pointer;font-size:16px}
+button:hover{background:#ff2222}
+.member{background:#2a2a2a;padding:8px;border-radius:8px;margin:5px 0;text-align:left}
+.gift{font-size:80px;cursor:pointer;animation:bounce 1s infinite}
+@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+.code-box{background:#ff3b3b;padding:10px;border-radius:10px;font-size:20px;letter-spacing:3px;margin:10px 0}
+</style>
+</head>
+<body>
+<div class="card" id="app">
+  <h1>🎅 Secret Santa</h1>
+  <div id="loginDiv">
+    <input id="nameInput" placeholder="Un peru enna da?">
+    <button onclick="login()">Login</button>
+  </div>
+  <div id="dashDiv" style="display:none">
+    <h3>Welcome <span id="welcomeName"></span>!</h3>
+    <button onclick="createRoom()">Create Room 👑</button>
+    <p>--- illa ---</p>
+    <input id="codeInput" placeholder="Room Code (ex: A1B2C3)">
+    <button onclick="joinRoom()" style="background:#333">Join Room</button>
+  </div>
+  <div id="roomDiv" style="display:none">
+    <div class="code-box">Code: <b id="roomCode"></b></div>
+    <p style="font-size:12px;color:#aaa">Itha friends ta share pannu da!</p>
+    <div id="members"></div>
+    <button id="shuffleBtn" style="display:none;background:green" onclick="shuffle()">Start Shuffle 🎲</button>
+    <p id="waitText" style="display:none;color:#aaa">Creator shuffle panna wait pannu da...</p>
+    <div id="giftDiv" style="display:none;margin-top:20px">
+      <div class="gift" onclick="openGift()">🎁</div>
+      <p>Gift ah click pannu da!</p>
+    </div>
+    <div id="resultDiv" style="display:none;margin-top:20px">
+      <h3>Unakku kidaichathu:</h3>
+      <h1 id="assignedName" style="color:#ff3b3b"></h1>
+      <p style="font-size:12px;color:#aaa">Yaar kitayum sollatha da! 🤫</p>
+    </div>
+  </div>
+</div>
+<script>
+let currentCode=null;
+async function login(){
+  const name=document.getElementById('nameInput').value.trim();
+  if(!name) return alert('Peru podu da!');
+  await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name})});
+  document.getElementById('loginDiv').style.display='none';
+  document.getElementById('dashDiv').style.display='block';
+  document.getElementById('welcomeName').innerText=name;
+}
+async function createRoom(){
+  const res=await fetch('/api/create_room',{method:'POST'});
+  const data=await res.json();
+  enterRoom(data.code);
+}
+async function joinRoom(){
+  const code=document.getElementById('codeInput').value.trim();
+  if(!code) return alert('Code podu da!');
+  const res=await fetch('/api/join_room',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code})});
+  const data=await res.json();
+  if(data.error) return alert(data.error);
+  enterRoom(data.code);
+}
+function enterRoom(code){
+  currentCode=code;
+  document.getElementById('dashDiv').style.display='none';
+  document.getElementById('roomDiv').style.display='block';
+  document.getElementById('roomCode').innerText=code;
+  setInterval(loadRoom,2000);
+  loadRoom();
+}
+async function loadRoom(){
+  const res=await fetch(`/api/room/${currentCode}`);
+  const data=await res.json();
+  document.getElementById('members').innerHTML='<b>Join pannavanga ('+data.members.length+'):</b><br>'+data.members.map(m=>`<div class="member">${m.name} ${m.name==data.creator?'👑 Creator':''}</div>`).join('');
+  if(data.is_creator && !data.shuffled){
+    document.getElementById('shuffleBtn').style.display='block';
+    document.getElementById('waitText').style.display='none';
+  } else if(!data.shuffled){
+    document.getElementById('shuffleBtn').style.display='none';
+    document.getElementById('waitText').style.display='block';
+  } else {
+    document.getElementById('shuffleBtn').style.display='none';
+    document.getElementById('waitText').style.display='none';
+  }
+  if(data.shuffled && data.my_assignment && document.getElementById('resultDiv').style.display=='none'){
+    document.getElementById('giftDiv').style.display='block';
+  }
+}
+async function shuffle(){
+  if(!confirm('Ellarum join pannitangala da? Shuffle pannidava?')) return;
+  await fetch(`/api/shuffle/${currentCode}`,{method:'POST'});
+  loadRoom();
+}
+async function openGift(){
+  const res=await fetch(`/api/room/${currentCode}`);
+  const data=await res.json();
+  document.getElementById('giftDiv').style.display='none';
+  document.getElementById('resultDiv').style.display='block';
+  document.getElementById('assignedName').innerText=data.my_assignment;
+}
+</script>
+</body>
+</html>
