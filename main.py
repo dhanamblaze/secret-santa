@@ -3,6 +3,8 @@ import random, string, os
 
 app = Flask(__name__)
 app.secret_key = 'secret-santa-2025'
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+app.config['SESSION_COOKIE_SECURE'] = False
 
 rooms = {}
 
