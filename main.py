@@ -19,7 +19,7 @@ button{background:#ff3b3b;color:white;border:none;font-weight:bold;cursor:pointe
 button:disabled{background:#aaa}
 button:hover{background:#e60000}
 .member{background:#f8f8f8;padding:8px;margin:4px;border-radius:8px;text-align:left}
-.gift{font-size:60px;cursor:pointer;transition:.3s}
+.gift{font-size:70px;cursor:pointer;transition:.3s}
 .gift:hover{transform:scale(1.2)}
 .hidden{display:none}
 .codebox{background:#fff3cd;padding:12px;border-radius:10px;font-size:22px;letter-spacing:3px;font-weight:bold;margin:10px 0;border:2px dashed #ff3b3b}
@@ -29,8 +29,7 @@ button:hover{background:#e60000}
 
 <div id="loginSec" class="card">
 <h2>🎅 Secret Santa</h2>
-<p>Un name enter pannu da</p>
-<input id="userName" placeholder="Ex: Dhanam">
+<input id="userName" placeholder="Name">
 <button onclick="login()">Login</button>
 </div>
 
@@ -38,7 +37,7 @@ button:hover{background:#e60000}
 <h2>Hi <span id="hiName"></span>! 👋</h2>
 <button onclick="createRoom()">🎁 Create Room</button>
 <p>OR</p>
-<input id="joinCode" placeholder="Room Code enter pannu">
+<input id="joinCode" placeholder="Room Code">
 <button onclick="joinRoom()">🚪 Join Room</button>
 <div id="dashMsg"></div>
 </div>
@@ -50,15 +49,12 @@ button:hover{background:#e60000}
 <h4>Joined Members (<span id="memCount">0</span>):</h4>
 <div id="memberList"></div>
 <div id="creatorCtrl" class="hidden">
-<hr>
-<p>Neenga than creator, ellarum join panna aprom:</p>
-<button id="shuffleBtn" onclick="shuffleRoom()">🔀 Shuffle Names</button>
+<button id="shuffleBtn" onclick="shuffleRoom()" style="margin-top:15px">🔀 Shuffle Names</button>
 </div>
 <div id="giftArea" class="hidden">
 <hr>
-<h3>🎁 Un gift box!</h3>
 <div class="gift" onclick="openGift()">🎁</div>
-<div id="myAssignment" style="font-size:32px;font-weight:bold;margin-top:15px"></div>
+<div id="myAssignment" style="font-size:36px;font-weight:bold;margin-top:15px"></div>
 </div>
 <div id="roomMsg"></div>
 <button onclick="location.reload()" style="background:#666;margin-top:15px">Leave Room</button>
@@ -128,11 +124,9 @@ async function loadRoom(){
 }
 
 async function shuffleRoom(){
-  if(!confirm('Ellarum join aagitangala? Shuffle pannidava?'))return;
   let r=await fetch('/api/shuffle',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code:myCode,creator:myName})});
   let d=await r.json();
   if(d.error){alert(d.error);return;}
-  alert('Shuffled! Ellarukkum gift box vanthidum!');
   loadRoom();
 }
 
