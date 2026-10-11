@@ -4,68 +4,75 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Secret Santa</title>
 <style>
-  *{box-sizing:border-box}
-  body{
-    margin:0; min-height:100vh; display:flex; align-items:center; justify-content:center;
-    background: url('/static/bg.jpg') no-repeat center center fixed;
-    background-size: cover;
-    font-family: system-ui, sans-serif;
-  }
-  body::after{content:""; position:fixed; inset:0; background:rgba(0,0,0,0.55); z-index:0;}
-  .snow{position:fixed; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:1; font-size:18px;}
-  .card{
-    position:relative; z-index:2; width:92%; max-width:400px;
-    background:rgba(15,15,15,0.88); backdrop-filter:blur(14px);
-    border:1px solid rgba(255,255,255,0.12);
-    border-radius:28px; padding:26px; text-align:center;
-    box-shadow:0 20px 60px rgba(0,0,0,0.6);
-  }
-  h1{color:white; margin:0 0 18px; font-size:26px;}
-  input{width:100%; padding:15px; border-radius:14px; border:none; font-size:16px; margin-bottom:12px; background:#222; color:white;}
-  input::placeholder{color:#999;}
-  .btn-red{width:100%; padding:14px; border-radius:14px; border:none; background:#ff2a2a; color:white; font-size:17px; font-weight:800; cursor:pointer;}
-  .btn-green{width:100%; padding:14px; border-radius:14px; border:none; background:#1db954; color:white; font-size:17px; font-weight:800; cursor:pointer; margin-top:10px;}
-  .code{background:#ff2a2a; color:white; padding:12px; border-radius:14px; font-weight:800; letter-spacing:2px; font-size:20px; margin-bottom:14px;}
-  .member{background:rgba(255,255,255,0.08); color:white; padding:10px 14px; border-radius:12px; margin:7px 0; text-align:left;}
-  .reveal-name{color:#ff3b3b; font-size:38px; font-weight:900; margin:16px 0 6px;}
-  .small-msg{color:#ffd6e0; font-size:14px; line-height:1.5;}
+body{margin:0;min-height:100vh;background:#1a1a1a url('/static/bg.jpg') center/cover no-repeat fixed;display:flex;align-items:center;justify-content:center;font-family:system-ui;color:white}
+.card{background:rgba(0,0,0,0.85);backdrop-filter:blur(10px);padding:28px;border-radius:28px;width:90%;max-width:340px;text-align:center;box-shadow:0 10px 40px rgba(0,0,0,0.6);border:1px solid rgba(255,255,255,0.1)}
+h1{margin:0 0 20px 0}
+input{width:100%;box-sizing:border-box;padding:14px;border-radius:14px;border:none;background:#222;color:white;margin:8px 0;font-size:16px;text-align:center;outline:none}
+.btn{width:100%;padding:14px;border:none;border-radius:14px;font-size:17px;font-weight:bold;cursor:pointer;margin:8px 0}
+.red{background:#ff2d2d;color:white}
+.green{background:#22c55e;color:white}
+.small{font-size:14px;opacity:0.8;margin-top:10px;word-break:break-all}
+.members{text-align:left;background:#111;padding:12px;border-radius:12px;margin:12px 0;max-height:150px;overflow:auto}
+.emoji-bar{position:fixed;top:0;left:0;width:100%;background:rgba(0,0,0,0.3);padding:6px 0;font-size:20px;white-space:nowrap;overflow:hidden}
 </style>
 </head>
 <body>
-<div class="snow">❄️ ⛄ 🎄 🎅 ❄️ ⛄ 🎄 🎅</div>
-<div class="card" id="app">Loading...</div>
+<div class="emoji-bar">❄️ ⛄ 🎄 🎅 ❄️ ⛄ 🎄 🎅 ❄️ ⛄ 🎄 🎅 ❄️ ⛄ 🎄 🎅</div>
+<div class="card" id="app">
+<h1>🎅 Secret Santa</h1>
+<input id="name" placeholder="Your Name (ex: Dhanam)">
+<button class="btn red" onclick="createGroup()">Create Group</button>
+<div>or</div>
+<input id="code" placeholder="Enter Code">
+<button class="btn green" onclick="joinGroup()">Join Group</button>
+<div id="msg" class="small"></div>
+</div>
 <script>
-let myName=localStorage.getItem('santa_name')||'';
-let roomCode=new URLSearchParams(location.search).get('code')||'';
-async function api(p,b){let r=await fetch(p,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b||{})});return r.json();}
-function showLogin(){
-  document.getElementById('app').innerHTML=`<h1>🎅 Secret Santa</h1><input id="n" placeholder="Name" value="${myName}"><button class="btn-red" onclick="doLogin()">Login</button><div style="margin-top:16px">⛄ 🎄 🎅</div>`;
+let myName="", roomCode=new URLSearchParams(location.search).get('code')||"";
+if(roomCode){ loadRoom(); }
+async function createGroup(){
+  myName=document.getElementById('name').value.trim();
+  if(!myName) return alert('Name enter pannu da!');
+  let res=await fetch('/api/create-room',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:myName})});
+  let data=await res.json();
+  location.href='/?code='+data.code+'&name='+encodeURIComponent(myName);
 }
-async function doLogin(){
-  let v=document.getElementById('n').value.trim(); if(!v) return;
-  myName=v; localStorage.setItem('santa_name',v);
-  await api('/api/login',{name:v});
-  if(roomCode) join(roomCode); else showHome();
+async function joinGroup(){
+  myName=document.getElementById('name').value.trim();
+  let code=document.getElementById('code').value.trim().toUpperCase();
+  if(!myName) return alert('Name enter pannu da!');
+  if(!code) return alert('Code enter pannu da!');
+  let res=await fetch('/api/join-room',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code,name:myName})});
+  let data=await res.json();
+  if(data.error) return alert(data.error);
+  location.href='/?code='+code+'&name='+encodeURIComponent(myName);
 }
-function showHome(){
-  document.getElementById('app').innerHTML=`<h1>🎅 Secret Santa</h1><button class="btn-red" onclick="create()">Create Group</button><div style="color:#aaa;margin:12px 0">or</div><input id="c" placeholder="Enter Code"><button class="btn-green" onclick="join(document.getElementById('c').value)">Join Group</button>`;
-}
-async function create(){let d=await api('/api/create-room',{}); roomCode=d.code; history.pushState({},'','?code='+roomCode); load();}
-async function join(code){if(!code) return; roomCode=code.toUpperCase(); history.pushState({},'','?code='+roomCode); await api('/api/join-room',{code:roomCode}); load();}
-async function load(){
-  let d=await fetch('/api/get-room?code='+roomCode).then(r=>r.json());
-  if(d.error){showHome(); return;}
-  let mems=d.members.map(m=>`<div class="member">${m} ${m==d.creator?'👑':''}</div>`).join('');
-  let btn=d.is_creator?`<button class="btn-green" onclick="shuffle()">Start Shuffle 🎲</button>`:`<div style="color:#888;margin-top:10px">Waiting for creator...</div>`;
-  let reveal='';
-  if(d.assigned){
-    reveal=`<div style="margin-top:18px;border-top:1px solid rgba(255,255,255,0.12);padding-top:16px"><div class="reveal-name">${d.assigned}</div><div class="small-msg">🎁 Gift ready pannu da!<br>Yaar kitayum sollatha da 🤫<br>Merry Christmas! 🎄❤️</div></div>`;
+async function loadRoom(){
+  let params=new URLSearchParams(location.search);
+  roomCode=params.get('code'); myName=params.get('name')||"";
+  if(!myName){ myName=prompt('Your name?'); if(!myName) return; }
+  let res=await fetch(`/api/get-room?code=${roomCode}&name=${encodeURIComponent(myName)}`);
+  let data=await res.json();
+  if(data.error){ document.getElementById('app').innerHTML='<h1>Error</h1><p>'+data.error+'</p><a href=\"/\" style=\"color:#22c55e\">Go Home</a>'; return; }
+  let html=`<h1>🎅 Secret Santa</h1>
+  <div class="small">Code: <b>${roomCode}</b> - Share this!</div>
+  <div class="members"><b>Members (${data.members.length}):</b><br>${data.members.join('<br>')}</div>`;
+  if(data.shuffled){
+    if(data.assigned) html+=`<div style="background:#22c55e;color:white;padding:14px;border-radius:12px;margin:10px 0;font-weight:bold">You got: ${data.assigned} 🎁</div>`;
+    else html+=`<div>Shuffled! Waiting...</div>`;
+  } else {
+    if(data.is_creator) html+=`<button class="btn red" onclick="shuffle()">Shuffle & Start 🎲</button>`;
+    else html+=`<div class="small">Waiting for admin to shuffle...</div>`;
   }
-  document.getElementById('app').innerHTML=`<h1>🎅 Secret Santa</h1><div class="code">Code: ${roomCode}</div>${mems}${btn}${reveal}`;
-  if(!d.assigned) setTimeout(load,3000);
+  html+=`<button class="btn green" onclick="location.href='/'">Leave</button><div class="small">Logged as: ${myName}</div>`;
+  document.getElementById('app').innerHTML=html;
+  if(!data.shuffled) setTimeout(loadRoom,2000);
 }
-async function shuffle(){await api('/api/shuffle-room',{code:roomCode}); load();}
-if(!myName) showLogin(); else {showHome(); if(roomCode) load();}
+async function shuffle(){
+  let res=await fetch('/api/shuffle-room',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code:roomCode})});
+  let data=await res.json();
+  if(data.error) alert(data.error); else loadRoom();
+}
 </script>
 </body>
 </html>
